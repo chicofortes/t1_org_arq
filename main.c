@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-
+				file_filter_by_criteria(FILE_NAME, argv[2], argv[3]);
 			}
 			break;
 		case '4':	//Busca de um registro por RRN (Relative Register Number)

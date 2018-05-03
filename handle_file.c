@@ -288,6 +288,115 @@ void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 	}
 }
 
+void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, const char *chave) {
+	if (nome_arq_binario == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+	FILE *binario = fopen(nome_arq_binario, "r+b");
+
+	if(binario == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+	HEADER binario_h;
+	binario_h.status = '0';
+	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0;
+	int escolaChecker = 0, prestadoraChecker = 0, cidadeChecker = 0, reg_size = 28;
+	char prestadora[10], data[11], escola[50], cidade[70], uf[3];
+	memset(prestadora, 0x00, sizeof(prestadora));
+	memset(escola, 0x00, sizeof(escola));
+	memset(cidade, 0x00, sizeof(cidade));
+	binario = fopen(nome_arq_binario, "r+b");
+
+	fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+	fseek(binario, (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
+
+	while(1) {
+		memset(uf, 0x00, sizeof(uf));
+		memset(escola, 0x00, sizeof(escola));
+		memset(cidade, 0x00, sizeof(cidade));
+		memset(prestadora, 0x00, sizeof(prestadora));
+
+		fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
+
+		if(codigoINEP != -1){
+			if(strncmp("codINEP", campo, sizeof(campo)) == 0 && codigoINEP == atoi(chave)) {
+				printRegister = 1;
+			}
+
+			// CAMPOS FIXOS
+			fread(data, (sizeof(data) - 1), 1, binario);
+			if(strncmp("dataAtiv", campo, sizeof(campo)) == 0 && strncmp(data, chave, sizeof(chave)) == 0) {
+				printRegister = 1;
+			}
+
+			fread(uf, (sizeof(uf) - 1), 1, binario);
+			if(strncmp("uf", campo, sizeof(campo)) == 0 && strncmp(uf, chave, sizeof(chave)) == 0) {
+				printRegister = 1;
+			}
+
+			// ESCOLA
+			fread(&campos_variaveis_size, sizeof(int), 1, binario);
+			reg_size = reg_size + campos_variaveis_size;
+			fread(escola, campos_variaveis_size, 1, binario);
+			if(campos_variaveis_size > 0) escolaChecker = campos_variaveis_size;
+			if(strncmp("nomeEscola", campo, sizeof(campo)) == 0 && strncmp(escola, chave, sizeof(chave)) == 0) {
+				printRegister = 1;
+			}
+
+			// CIDADE
+			fread(&campos_variaveis_size, sizeof(int), 1, binario);
+			reg_size = reg_size + campos_variaveis_size;
+			fread(cidade, campos_variaveis_size, 1, binario);
+			if(campos_variaveis_size > 0) cidadeChecker = campos_variaveis_size;
+			if(strncmp("municipio", campo, sizeof(campo)) == 0 && strncmp(cidade, chave, sizeof(chave)) == 0) {
+				printRegister = 1;
+			}
+
+			// PRESTADORA
+			fread(&campos_variaveis_size, sizeof(int), 1, binario);
+			reg_size = reg_size + campos_variaveis_size;
+			fread(prestadora, campos_variaveis_size, 1, binario);
+			if(campos_variaveis_size > 0) prestadoraChecker = campos_variaveis_size;
+			if(strncmp("prestadora", campo, sizeof(campo)) == 0 && strncmp(prestadora, chave, sizeof(chave)) == 0) {
+				printRegister = 1;
+			}
+
+			if(printRegister) {
+				// PRINT_OUTPUT
+				printf("%d ", codigoINEP);
+				if(data[0] != '0') printf("%s ", data);
+				if(uf[0] != '0') printf("%s ", uf);
+				if(escolaChecker > 0) printf("%d %s ", escolaChecker, escola);
+				if(cidadeChecker > 0) printf("%d %s ", cidadeChecker, cidade);
+				if(prestadoraChecker > 0) printf("%d %s", prestadoraChecker, prestadora);
+				printf("\n");
+				printRegister = 0;
+			}
+		}
+		else {
+			fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+		}
+		if(feof(binario) == 0) {
+			if (reg_size < IN_DISK_REG_SIZE) {
+				fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
+			}
+		}
+		else {
+			break;
+		}
+		reg_size = 28;
+	}
+
+	rewind(binario);
+	binario_h.status = '1';
+	fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+	fclose(binario);
+}
+
 void file_delete_record(const char *nome_arq_binario, int rrn)
 {
 	if(nome_arq_binario != NULL)
