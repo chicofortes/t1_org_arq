@@ -411,12 +411,13 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fseek(binario, (rrn - 1) * IN_DISK_REG_SIZE, SEEK_CUR);
-			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
+			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0 && codigoINEP != -1)
 			{
 				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
 				fwrite(&marca, sizeof(marca), 1, binario);
 				fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 				binario_h.topoPilha = rrn;
+				printf("Registro removido com sucesso.\n");
 			}
 			else
 			{
@@ -427,7 +428,6 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fclose(binario);
-			printf("Registro removido com sucesso.\n");
 		}
 		else
 		{
