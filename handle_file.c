@@ -231,12 +231,12 @@ void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 				{
 					printf("%d ", codigoINEP);
 					fread(data, (sizeof(data) - 1), 1, binario);
-					if(strcmp(data, "0000000000") != 0)
+					if(data[0] != '0')
 					{
 						printf("%s ", data);
 					}
 					fread(uf, (sizeof(uf) - 1), 1, binario);
-					if(strcmp(uf, "00") != 0)
+					if(uf[0] != '0')
 					{
 						printf("%s ", uf);
 					}
@@ -441,11 +441,11 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 }
 
 void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, char *newData, char *newUF, char *newEscola, char *newCidade, char *newPrestadora){
-	char status = '0', bytePadding = '0';
+	char status = '0', bytePadding = '0', nulo = '0';
 	FILE *binario = NULL;
 	int campos_variaveis_size, isRemoved, regsize;
 
-	binario = fopen(nome_arq_binario, "w+b");
+	binario = fopen(nome_arq_binario, "r+b");
 	if(binario != NULL){
 		fwrite(&status, sizeof(status), 1, binario);
 		fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + sizeof(int), SEEK_CUR);
@@ -454,10 +454,10 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 				fseek(binario, -sizeof(isRemoved), SEEK_CUR);
 				regsize = 28;
 				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
-				if(strcmp(newData, "0") == 0) fwrite("0000000000", sizeof(char), 10, binario);
-				else fwrite(newData, (sizeof(newData) - 1), 1, binario);
-				if(strcmp(newUF, "0") == 0) fwrite("00", sizeof(char), 2, binario);
-				else fwrite(newUF, (sizeof(newUF) - 1), 1, binario);
+				if(strcmp(newData, "0") == 0) fwrite(&nulo, sizeof(char), 10, binario);
+				else fwrite(newData, strlen(newData), 1, binario);
+				if(strcmp(newUF, "0") == 0) fwrite(&nulo, sizeof(char), 2, binario);
+				else fwrite(newUF, strlen(newUF), 1, binario);
 				campos_variaveis_size = strlen(newEscola);
 				regsize += campos_variaveis_size;
 				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
@@ -476,6 +476,10 @@ void file_update_rrn(const char *nome_arq_binario, int rrn, int newCodigoINEP, c
 			else{
 				printf("Registro inexistente.\n");
 			}
+		}
+		else
+		{
+			printf("Registro inexistente.\n");
 		}
 		rewind(binario);
 		fwrite(&status, sizeof(status), 1, binario);
