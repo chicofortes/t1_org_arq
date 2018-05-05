@@ -136,6 +136,7 @@ void file_read_all_binary(const char *nome_arq_binario){
 
 		if(binario == NULL) {
 			printf("Arquivo inexistente.");
+			return;
 		}
 
 		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
@@ -147,7 +148,7 @@ void file_read_all_binary(const char *nome_arq_binario){
 			memset(cidade, 0x00, sizeof(cidade));
 			memset(prestadora, 0x00, sizeof(prestadora));
 			fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
-			if(codigoINEP != -1){
+			if(codigoINEP != -1 && feof(binario) == 0){
 				printf("%d ", codigoINEP);
 				fread(data, (sizeof(data) - 1), 1, binario);
 				if(data[0] != '0')
@@ -181,20 +182,21 @@ void file_read_all_binary(const char *nome_arq_binario){
 					printf("%d %s", campos_variaveis_size, prestadora);
 				}
 				printf("\n");
-			}
-			else
-			{
-				fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
-			}
-			if(feof(binario) == 0)
-			{
-				if (reg_size < IN_DISK_REG_SIZE) {
+				if (reg_size < IN_DISK_REG_SIZE && feof(binario) == 0) {
 					fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
 				}
+				else if(feof(binario) != 0) break;
 			}
 			else
 			{
-				break;
+				if(feof(binario) == 0)
+				{
+					fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+				}
+				else
+				{
+					break;
+				}
 			}
 			reg_size = 28;
 		}
