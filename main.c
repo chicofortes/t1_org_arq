@@ -1,6 +1,6 @@
 /*
 	Nome: Andre Luis Storino Junior, N USP: 9293668
-	Nome: Francisco, N USP:
+	Nome: Francisco Mattos Fortes, N USP: 4590431
 	Nome: Leonardo, N USP:
 	Nome: Paulo Ricardo J. Miranda, N USP: 10133456
 */
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 			else{
-
+				file_add_record(FILE_NAME, atoi(argv[2]), argv[3], argv[4], argv[5], argv[6], argv[7]);
 			}
 			break;
 		case '7':	//Atualizacao dos campos de um registro existente no arquivo de dados
