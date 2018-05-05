@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "inc/escola.h"
 #include "inc/handle_file.h"
 
 #define FILE_NAME "arquivo.dat" //Nome do arquivo binario
