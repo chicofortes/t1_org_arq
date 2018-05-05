@@ -305,7 +305,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 
 	HEADER binario_h;
 	binario_h.status = '0';
-	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0, print_flag = 0;
+	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0, print_flag = 0; // print_flag e usado para saber se algum registro foi printado.
 	int escolaChecker = 0, prestadoraChecker = 0, cidadeChecker = 0, reg_size = 28;
 	char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 	memset(prestadora, 0x00, sizeof(prestadora));
@@ -399,7 +399,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 		reg_size = 28;
 	}
 
-	if(print_flag == 0)
+	if(print_flag == 0) // Se não houve print (o mesmo que: nao encontrou nenhum registro que satisfaz o criterio).
 	{
 		printf("Registro inexistente.\n");
 	}
@@ -423,12 +423,12 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fseek(binario, (rrn - 1) * IN_DISK_REG_SIZE, SEEK_CUR);
-			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0 && codigoINEP != -1)
+			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0 && codigoINEP != -1) // Se e um RRN valido e se o registro nao foi deletado
 			{
-				fseek(binario, -sizeof(codigoINEP), SEEK_CUR);
-				fwrite(&marca, sizeof(marca), 1, binario);
-				fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
-				binario_h.topoPilha = rrn;
+				fseek(binario, -sizeof(codigoINEP), SEEK_CUR); // Volta o campo de codigo que havia lido
+				fwrite(&marca, sizeof(marca), 1, binario); // Marca como registro excluido
+				fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario); // Escreve o topo da pilha
+				binario_h.topoPilha = rrn; // Guarda o novo topo da pilha
 				printf("Registro removido com sucesso.\n");
 			}
 			else
@@ -436,9 +436,9 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 				printf("Registro inexistente.\n");
 			}
 			binario_h.status = '1';
-			rewind(binario);
+			rewind(binario); // Volta o poteiro do arquivo para o comeco do mesmo
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario); // Atualiza o topo da pilha
 			fclose(binario);
 		}
 		else
