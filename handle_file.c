@@ -436,6 +436,9 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 		{
 			binario_h.status = '0';
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			
+			fseek(binario, sizeof(binario_h.status), SEEK_SET);
+			
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fseek(binario, (rrn - 1) * IN_DISK_REG_SIZE, SEEK_CUR);
 			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0 && codigoINEP != -1) // Se e um RRN valido e se o registro nao foi deletado
@@ -529,6 +532,9 @@ void file_print_stack(const char *nome_arq_binario)
 		{
 			binario_h.status = '0';
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			
+			fseek(binario, sizeof(binario_h.status), SEEK_SET);
+			
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			tmp_pilha = binario_h.topoPilha;
 			if(tmp_pilha != -1)
@@ -546,6 +552,91 @@ void file_print_stack(const char *nome_arq_binario)
 				printf("Pilha vazia.");
 			}
 			printf("\n");
+			binario_h.status = '1';
+			rewind(binario);
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fwrite(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			fclose(binario);
+		}
+		else
+		{
+			printf("Falha no processamento do arquivo.\n");
+		}
+	}
+	else
+	{
+		printf("Falha no processamento do arquivo.\n");
+	}
+}
+
+void file_add_record(const char *nome_arq_binario, int newCodigoINEP, char *newData, char *newUF, char *newEscola, char *newCidade, char *newPrestadora)
+{
+	if(nome_arq_binario != NULL)
+	{
+		HEADER binario_h;
+		FILE *binario = NULL;
+		int tmp_pilha = -1, campos_variaveis_size = 0, marca = -1, regsize = 28;
+		char bytePadding = '0', nulo = '0';
+
+		binario = fopen(nome_arq_binario, "r+b");
+		if(binario != NULL)
+		{
+			binario_h.status = '0';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			
+			fseek(binario, sizeof(binario_h.status), SEEK_SET);
+			
+			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+			tmp_pilha = binario_h.topoPilha;
+			
+			if(tmp_pilha != -1)
+			{
+				fseek(binario, ((binario_h.topoPilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE + sizeof(marca), SEEK_SET);
+				fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+				
+				fseek(binario, ((tmp_pilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE, SEEK_SET);
+				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
+				if(strcmp(newData, "0") == 0) fwrite(&nulo, sizeof(char), 10, binario);
+				else fwrite(newData, strlen(newData), 1, binario);
+				if(strcmp(newUF, "0") == 0) fwrite(&nulo, sizeof(char), 2, binario);
+				else fwrite(newUF, strlen(newUF), 1, binario);
+				campos_variaveis_size = strlen(newEscola);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newEscola, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newCidade);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newCidade, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newPrestadora);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newPrestadora, campos_variaveis_size, 1, binario);
+				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario);
+			}
+			else
+			{
+				fseek(binario, 0, SEEK_END);
+				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
+				if(strcmp(newData, "0") == 0) fwrite(&nulo, sizeof(char), 10, binario);
+				else fwrite(newData, strlen(newData), 1, binario);
+				if(strcmp(newUF, "0") == 0) fwrite(&nulo, sizeof(char), 2, binario);
+				else fwrite(newUF, strlen(newUF), 1, binario);
+				campos_variaveis_size = strlen(newEscola);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newEscola, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newCidade);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newCidade, campos_variaveis_size, 1, binario);
+				campos_variaveis_size = strlen(newPrestadora);
+				regsize += campos_variaveis_size;
+				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
+				if(campos_variaveis_size > 0) fwrite(newPrestadora, campos_variaveis_size, 1, binario);
+				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario);
+			}
+			printf("Registro inserido com sucesso.\n");
 			binario_h.status = '1';
 			rewind(binario);
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
