@@ -305,7 +305,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 
 	HEADER binario_h;
 	binario_h.status = '0';
-	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0;
+	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0, print_flag = 0;
 	int escolaChecker = 0, prestadoraChecker = 0, cidadeChecker = 0, reg_size = 28;
 	char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 	memset(prestadora, 0x00, sizeof(prestadora));
@@ -324,7 +324,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 
 		fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
 
-		if(codigoINEP != -1){
+		if(codigoINEP != -1 && feof(binario) == 0){
 			if(strncmp("codINEP", campo, sizeof(campo)) == 0 && codigoINEP == atoi(chave)) {
 				printRegister = 1;
 			}
@@ -377,22 +377,32 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 				if(prestadoraChecker > 0) printf("%d %s", prestadoraChecker, prestadora);
 				printf("\n");
 				printRegister = 0;
+				print_flag = 1;
 			}
-		}
-		else {
-			fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
-		}
-		if(feof(binario) == 0) {
-			if (reg_size < IN_DISK_REG_SIZE) {
+			if (reg_size < IN_DISK_REG_SIZE && feof(binario) == 0) {
 				fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
 			}
+			else if(feof(binario) != 0) {
+				break;
+			}
 		}
 		else {
-			break;
+			if(feof(binario) == 0)
+			{
+				fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+			}
+			else
+			{
+				break;
+			}
 		}
 		reg_size = 28;
 	}
 
+	if(print_flag == 0)
+	{
+		printf("Registro inexistente.\n");
+	}
 	rewind(binario);
 	binario_h.status = '1';
 	fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
