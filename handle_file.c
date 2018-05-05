@@ -331,40 +331,55 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 
 			// CAMPOS FIXOS
 			fread(data, (sizeof(data) - 1), 1, binario);
-			if(strncmp("dataAtiv", campo, sizeof(campo)) == 0 && strncmp(data, chave, sizeof(chave)) == 0) {
-				printRegister = 1;
+			if(data[0] != '0')
+			{
+				if(strncmp("dataAtiv", campo, sizeof(campo)) == 0 && strncmp(data, chave, sizeof(chave)) == 0) {
+					printRegister = 1;
+				}
 			}
 
 			fread(uf, (sizeof(uf) - 1), 1, binario);
-			if(strncmp("uf", campo, sizeof(campo)) == 0 && strncmp(uf, chave, sizeof(chave)) == 0) {
-				printRegister = 1;
+			if(uf[0] != '0')
+			{
+				if(strncmp("uf", campo, sizeof(campo)) == 0 && strncmp(uf, chave, sizeof(chave)) == 0) {
+					printRegister = 1;
+				}
 			}
 
 			// ESCOLA
 			fread(&campos_variaveis_size, sizeof(int), 1, binario);
 			reg_size = reg_size + campos_variaveis_size;
 			fread(escola, campos_variaveis_size, 1, binario);
-			if(campos_variaveis_size > 0) escolaChecker = campos_variaveis_size;
-			if(strncmp("nomeEscola", campo, sizeof(campo)) == 0 && strncmp(escola, chave, sizeof(chave)) == 0) {
-				printRegister = 1;
-			}
+			if(campos_variaveis_size > 0)
+			{
+				 escolaChecker = campos_variaveis_size;
+				 if(strncmp("nomeEscola", campo, sizeof(campo)) == 0 && strncmp(escola, chave, sizeof(chave)) == 0) {
+					 printRegister = 1;
+				 }
+			 }
 
 			// CIDADE
 			fread(&campos_variaveis_size, sizeof(int), 1, binario);
 			reg_size = reg_size + campos_variaveis_size;
 			fread(cidade, campos_variaveis_size, 1, binario);
-			if(campos_variaveis_size > 0) cidadeChecker = campos_variaveis_size;
-			if(strncmp("municipio", campo, sizeof(campo)) == 0 && strncmp(cidade, chave, sizeof(chave)) == 0) {
-				printRegister = 1;
-			}
+			if(campos_variaveis_size > 0)
+			{
+				 cidadeChecker = campos_variaveis_size;
+				 if(strncmp("municipio", campo, sizeof(campo)) == 0 && strncmp(cidade, chave, sizeof(chave)) == 0) {
+					 printRegister = 1;
+				 }
+			 }
 
 			// PRESTADORA
 			fread(&campos_variaveis_size, sizeof(int), 1, binario);
 			reg_size = reg_size + campos_variaveis_size;
 			fread(prestadora, campos_variaveis_size, 1, binario);
-			if(campos_variaveis_size > 0) prestadoraChecker = campos_variaveis_size;
-			if(strncmp("prestadora", campo, sizeof(campo)) == 0 && strncmp(prestadora, chave, sizeof(chave)) == 0) {
-				printRegister = 1;
+			if(campos_variaveis_size > 0)
+			{
+				prestadoraChecker = campos_variaveis_size;
+				if(strncmp("prestadora", campo, sizeof(campo)) == 0 && strncmp(prestadora, chave, sizeof(chave)) == 0) {
+					printRegister = 1;
+				}
 			}
 
 			if(printRegister) {
