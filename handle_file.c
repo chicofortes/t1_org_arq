@@ -131,7 +131,7 @@ void file_read_all_binary(const char *nome_arq_binario){
 		FILE *binario = fopen(nome_arq_binario, "r+b");
 		HEADER binario_h;
 		binario_h.status = '0';
-		int campos_variaveis_size = 0, codigoINEP, reg_size = 28;
+		int campos_variaveis_size = 0, codigoINEP = 0, reg_size = 28;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 
 		if(binario == NULL) {
@@ -144,6 +144,7 @@ void file_read_all_binary(const char *nome_arq_binario){
 
 		while(1) {
 			memset(uf, 0x00, sizeof(uf));
+			memset(data, 0x00, sizeof(data));
 			memset(escola, 0x00, sizeof(escola));
 			memset(cidade, 0x00, sizeof(cidade));
 			memset(prestadora, 0x00, sizeof(prestadora));
@@ -219,6 +220,8 @@ void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 		binario_h.status = '0';
 		int campos_variaveis_size = 0, codigoINEP = 0;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
+		memset(uf, 0x00, sizeof(uf));
+		memset(data, 0x00, sizeof(data));
 		memset(prestadora, 0x00, sizeof(prestadora));
 		memset(escola, 0x00, sizeof(escola));
 		memset(cidade, 0x00, sizeof(cidade));
@@ -306,11 +309,8 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 	HEADER binario_h;
 	binario_h.status = '0';
 	int campos_variaveis_size = 0, codigoINEP = 0, printRegister = 0, print_flag = 0; // print_flag e usado para saber se algum registro foi printado.
-	int escolaChecker = 0, prestadoraChecker = 0, cidadeChecker = 0, reg_size = 28;
-	char prestadora[10], data[11], escola[50], cidade[70], uf[3];
-	memset(prestadora, 0x00, sizeof(prestadora));
-	memset(escola, 0x00, sizeof(escola));
-	memset(cidade, 0x00, sizeof(cidade));
+	int escolaChecker = 0, prestadoraChecker = 0, cidadeChecker = 0, reg_size = 28; // Variaveis utilizadas para guardar os tamanhos dos campos variaveis do registro.
+	char prestadora[10], data[11], escola[50], cidade[70], uf[3]; // Variaveis utilizadas para a recuperacao dos campos do registro.
 	binario = fopen(nome_arq_binario, "r+b");
 
 	fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
@@ -318,6 +318,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 
 	while(1) {
 		memset(uf, 0x00, sizeof(uf));
+		memset(data, 0x00, sizeof(data));
 		memset(escola, 0x00, sizeof(escola));
 		memset(cidade, 0x00, sizeof(cidade));
 		memset(prestadora, 0x00, sizeof(prestadora));
@@ -333,7 +334,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 			fread(data, (sizeof(data) - 1), 1, binario);
 			if(data[0] != '0')
 			{
-				if(strncmp("dataAtiv", campo, sizeof(campo)) == 0 && strncmp(data, chave, sizeof(chave)) == 0) {
+				if(strncmp("dataAtiv", campo, sizeof(campo)) == 0 && strncmp(data, chave, strlen(chave)) == 0) {
 					printRegister = 1;
 				}
 			}
@@ -341,7 +342,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 			fread(uf, (sizeof(uf) - 1), 1, binario);
 			if(uf[0] != '0')
 			{
-				if(strncmp("uf", campo, sizeof(campo)) == 0 && strncmp(uf, chave, sizeof(chave)) == 0) {
+				if(strncmp("uf", campo, sizeof(campo)) == 0 && strncmp(uf, chave, strlen(chave)) == 0) {
 					printRegister = 1;
 				}
 			}
@@ -353,7 +354,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 			if(campos_variaveis_size > 0)
 			{
 				 escolaChecker = campos_variaveis_size;
-				 if(strncmp("nomeEscola", campo, sizeof(campo)) == 0 && strncmp(escola, chave, sizeof(chave)) == 0) {
+				 if(strncmp("nomeEscola", campo, sizeof(campo)) == 0 && strncmp(escola, chave, strlen(chave)) == 0) {
 					 printRegister = 1;
 				 }
 			 }
@@ -365,7 +366,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 			if(campos_variaveis_size > 0)
 			{
 				 cidadeChecker = campos_variaveis_size;
-				 if(strncmp("municipio", campo, sizeof(campo)) == 0 && strncmp(cidade, chave, sizeof(chave)) == 0) {
+				 if(strncmp("municipio", campo, sizeof(campo)) == 0 && strncmp(cidade, chave, strlen(chave)) == 0) {
 					 printRegister = 1;
 				 }
 			 }
@@ -377,12 +378,12 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 			if(campos_variaveis_size > 0)
 			{
 				prestadoraChecker = campos_variaveis_size;
-				if(strncmp("prestadora", campo, sizeof(campo)) == 0 && strncmp(prestadora, chave, sizeof(chave)) == 0) {
+				if(strncmp("prestadora", campo, sizeof(campo)) == 0 && strncmp(prestadora, chave, strlen(chave)) == 0) {
 					printRegister = 1;
 				}
 			}
 
-			if(printRegister) {
+			if(printRegister) { // Se encontrou algum registro que satisfaz o criterio
 				// PRINT_OUTPUT
 				printf("%d ", codigoINEP);
 				if(data[0] != '0') printf("%s ", data);
@@ -414,7 +415,7 @@ void file_filter_by_criteria(const char *nome_arq_binario, const char *campo, co
 		reg_size = 28;
 	}
 
-	if(print_flag == 0) // Se não houve print (o mesmo que: nao encontrou nenhum registro que satisfaz o criterio).
+	if(print_flag == 0) // Se nao houve print (o mesmo que: nao encontrou nenhum registro que satisfaz o criterio).
 	{
 		printf("Registro inexistente.\n");
 	}
@@ -436,9 +437,9 @@ void file_delete_record(const char *nome_arq_binario, int rrn)
 		{
 			binario_h.status = '0';
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			
+
 			fseek(binario, sizeof(binario_h.status), SEEK_SET);
-			
+
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			fseek(binario, (rrn - 1) * IN_DISK_REG_SIZE, SEEK_CUR);
 			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0 && codigoINEP != -1) // Se e um RRN valido e se o registro nao foi deletado
@@ -532,9 +533,9 @@ void file_print_stack(const char *nome_arq_binario)
 		{
 			binario_h.status = '0';
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			
+
 			fseek(binario, sizeof(binario_h.status), SEEK_SET);
-			
+
 			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
 			tmp_pilha = binario_h.topoPilha;
 			if(tmp_pilha != -1)
@@ -583,18 +584,18 @@ void file_add_record(const char *nome_arq_binario, int newCodigoINEP, char *newD
 		{
 			binario_h.status = '0';
 			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			
+
 			fseek(binario, sizeof(binario_h.status), SEEK_SET);
-			
-			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
+
+			fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario); // Recupera o topo da pilha
 			tmp_pilha = binario_h.topoPilha;
-			
-			if(tmp_pilha != -1)
+
+			if(tmp_pilha != -1) // Caso há algum registro logicamente removido
 			{
-				fseek(binario, ((binario_h.topoPilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE + sizeof(marca), SEEK_SET);
+				fseek(binario, ((binario_h.topoPilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE + sizeof(marca), SEEK_SET); // Pega o novo topo da pilha a partir da poisicao inicial do arquivo
 				fread(&binario_h.topoPilha, sizeof(binario_h.topoPilha), 1, binario);
-				
-				fseek(binario, ((tmp_pilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE, SEEK_SET);
+
+				fseek(binario, ((tmp_pilha - 1) * IN_DISK_REG_SIZE) + IN_DISK_HEADER_SIZE, SEEK_SET); // Vai para o comeco do registro
 				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
 				if(strcmp(newData, "0") == 0) fwrite(&nulo, sizeof(char), 10, binario);
 				else fwrite(newData, strlen(newData), 1, binario);
@@ -612,9 +613,9 @@ void file_add_record(const char *nome_arq_binario, int newCodigoINEP, char *newD
 				regsize += campos_variaveis_size;
 				fwrite(&campos_variaveis_size, sizeof(int), 1, binario);
 				if(campos_variaveis_size > 0) fwrite(newPrestadora, campos_variaveis_size, 1, binario);
-				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario);
+				if(regsize < 87) fwrite(&bytePadding, sizeof(char), IN_DISK_REG_SIZE - regsize, binario); // Preenche com o byte padding para o tamnho do registro ser fixo
 			}
-			else
+			else // Caso a pilha esteja vazia, insere no final do arquivo
 			{
 				fseek(binario, 0, SEEK_END);
 				fwrite(&newCodigoINEP, sizeof(newCodigoINEP), 1, binario);
