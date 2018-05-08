@@ -130,7 +130,6 @@ void file_read_all_binary(const char *nome_arq_binario){
 	if(nome_arq_binario != NULL){
 		FILE *binario = fopen(nome_arq_binario, "r+b");
 		HEADER binario_h;
-		binario_h.status = '0';
 		int campos_variaveis_size = 0, codigoINEP = 0, reg_size = 28;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 
@@ -138,72 +137,80 @@ void file_read_all_binary(const char *nome_arq_binario){
 			printf("Arquivo inexistente.");
 			return;
 		}
+		fread(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		if(binario_h.status == '1'){ // Se o arquivo esta consistente
+			binario_h.status = '0';
+			rewind(binario);
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			fseek(binario, (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
 
-		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-		fseek(binario, (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
-
-		while(1) {
-			memset(uf, 0x00, sizeof(uf));
-			memset(data, 0x00, sizeof(data));
-			memset(escola, 0x00, sizeof(escola));
-			memset(cidade, 0x00, sizeof(cidade));
-			memset(prestadora, 0x00, sizeof(prestadora));
-			fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
-			if(codigoINEP != -1 && feof(binario) == 0){
-				printf("%d ", codigoINEP);
-				fread(data, (sizeof(data) - 1), 1, binario);
-				if(data[0] != '0')
-				{
-					printf("%s ", data);
-				}
-				fread(uf, (sizeof(uf) - 1), 1, binario);
-				if(uf[0] != '0')
-				{
-					printf("%s ", uf);
-				}
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(escola, campos_variaveis_size, 1, binario);
-				if(campos_variaveis_size > 0)
-				{
-					printf("%d %s ", campos_variaveis_size, escola);
-				}
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(cidade, campos_variaveis_size, 1, binario);
-				if(campos_variaveis_size > 0)
-				{
-					printf("%d %s ", campos_variaveis_size, cidade);
-				}
-				fread(&campos_variaveis_size, sizeof(int), 1, binario);
-				reg_size = reg_size + campos_variaveis_size;
-				fread(prestadora, campos_variaveis_size, 1, binario);
-				if(campos_variaveis_size > 0)
-				{
-					printf("%d %s", campos_variaveis_size, prestadora);
-				}
-				printf("\n");
-				if (reg_size < IN_DISK_REG_SIZE && feof(binario) == 0) {
-					fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
-				}
-				else if(feof(binario) != 0) break;
-			}
-			else
-			{
-				if(feof(binario) == 0)
-				{
-					fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+			while(1) {
+				memset(uf, 0x00, sizeof(uf));
+				memset(data, 0x00, sizeof(data));
+				memset(escola, 0x00, sizeof(escola));
+				memset(cidade, 0x00, sizeof(cidade));
+				memset(prestadora, 0x00, sizeof(prestadora));
+				fread(&codigoINEP, sizeof(codigoINEP), 1, binario);
+				if(codigoINEP != -1 && feof(binario) == 0){
+					printf("%d ", codigoINEP);
+					fread(data, (sizeof(data) - 1), 1, binario);
+					if(data[0] != '0')
+					{
+						printf("%s ", data);
+					}
+					fread(uf, (sizeof(uf) - 1), 1, binario);
+					if(uf[0] != '0')
+					{
+						printf("%s ", uf);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(escola, campos_variaveis_size, 1, binario);
+					if(campos_variaveis_size > 0)
+					{
+						printf("%d %s ", campos_variaveis_size, escola);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(cidade, campos_variaveis_size, 1, binario);
+					if(campos_variaveis_size > 0)
+					{
+						printf("%d %s ", campos_variaveis_size, cidade);
+					}
+					fread(&campos_variaveis_size, sizeof(int), 1, binario);
+					reg_size = reg_size + campos_variaveis_size;
+					fread(prestadora, campos_variaveis_size, 1, binario);
+					if(campos_variaveis_size > 0)
+					{
+						printf("%d %s", campos_variaveis_size, prestadora);
+					}
+					printf("\n");
+					if (reg_size < IN_DISK_REG_SIZE && feof(binario) == 0) {
+						fseek(binario, IN_DISK_REG_SIZE - reg_size, SEEK_CUR);
+					}
+					else if(feof(binario) != 0) break;
 				}
 				else
 				{
-					break;
+					if(feof(binario) == 0)
+					{
+						fseek(binario, IN_DISK_REG_SIZE - sizeof(int), SEEK_CUR);
+					}
+					else
+					{
+						break;
+					}
 				}
+				reg_size = 28;
 			}
-			reg_size = 28;
+			rewind(binario);
+			binario_h.status = '1';
+			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 		}
-		rewind(binario);
-		binario_h.status = '1';
-		fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+		else // Se o arquivo nao esta consistente
+		{
+			printf("Arquivo inconsistente.\n");
+		}
 		fclose(binario);
 	}
 	else {
@@ -217,7 +224,6 @@ void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 	{
 		FILE *binario = NULL;
 		HEADER binario_h;
-		binario_h.status = '0';
 		int campos_variaveis_size = 0, codigoINEP = 0;
 		char prestadora[10], data[11], escola[50], cidade[70], uf[3];
 		memset(uf, 0x00, sizeof(uf));
@@ -228,58 +234,68 @@ void file_read_binary_rrn(const char *nome_arq_binario, const int rrn)
 		binario = fopen(nome_arq_binario, "r+b");
 		if(binario != NULL)
 		{
-			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
-			fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
-			if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
+			fread(&binario_h.status, sizeof(binario_h.status), 1, binario);
+			if(binario_h.status == '1') // Se o arquivo esta consistente
 			{
-				if(codigoINEP != -1)
+				rewind(binario);
+				binario_h.status = '0';
+				fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
+				fseek(binario, (IN_DISK_REG_SIZE * (rrn - 1)) + (IN_DISK_HEADER_SIZE - 1), SEEK_CUR);
+				if(fread(&codigoINEP, sizeof(codigoINEP), 1, binario) > 0)
 				{
-					printf("%d ", codigoINEP);
-					fread(data, (sizeof(data) - 1), 1, binario);
-					if(data[0] != '0')
+					if(codigoINEP != -1)
 					{
-						printf("%s ", data);
+						printf("%d ", codigoINEP);
+						fread(data, (sizeof(data) - 1), 1, binario);
+						if(data[0] != '0')
+						{
+							printf("%s ", data);
+						}
+						fread(uf, (sizeof(uf) - 1), 1, binario);
+						if(uf[0] != '0')
+						{
+							printf("%s ", uf);
+						}
+						fread(&campos_variaveis_size, sizeof(int), 1, binario);
+						printf("%d ", campos_variaveis_size);
+						if(campos_variaveis_size > 0)
+						{
+							fread(escola, campos_variaveis_size, 1, binario);
+							printf("%s ", escola);
+						}
+						fread(&campos_variaveis_size, sizeof(int), 1, binario);
+						printf("%d ", campos_variaveis_size);
+						if(campos_variaveis_size > 0)
+						{
+							fread(cidade, campos_variaveis_size, 1, binario);
+							printf("%s ", cidade);
+						}
+						fread(&campos_variaveis_size, sizeof(int), 1, binario);
+						printf("%d ", campos_variaveis_size);
+						if(campos_variaveis_size > 0)
+						{
+							fread(prestadora, campos_variaveis_size, 1, binario);
+							printf("%s", prestadora);
+						}
+						printf("\n");
 					}
-					fread(uf, (sizeof(uf) - 1), 1, binario);
-					if(uf[0] != '0')
+					else
 					{
-						printf("%s ", uf);
+						printf("Registro inexistente.\n");
 					}
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					printf("%d ", campos_variaveis_size);
-					if(campos_variaveis_size > 0)
-					{
-						fread(escola, campos_variaveis_size, 1, binario);
-						printf("%s ", escola);
-					}
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					printf("%d ", campos_variaveis_size);
-					if(campos_variaveis_size > 0)
-					{
-						fread(cidade, campos_variaveis_size, 1, binario);
-						printf("%s ", cidade);
-					}
-					fread(&campos_variaveis_size, sizeof(int), 1, binario);
-					printf("%d ", campos_variaveis_size);
-					if(campos_variaveis_size > 0)
-					{
-						fread(prestadora, campos_variaveis_size, 1, binario);
-						printf("%s", prestadora);
-					}
-					printf("\n");
 				}
 				else
 				{
 					printf("Registro inexistente.\n");
 				}
+				rewind(binario);
+				binario_h.status = '1';
+				fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			}
-			else
+			else // Se o arquivo nao esta consistente
 			{
-				printf("Registro inexistente.\n");
+				printf("Arquivo insconsistente.\n");
 			}
-			rewind(binario);
-			binario_h.status = '1';
-			fwrite(&binario_h.status, sizeof(binario_h.status), 1, binario);
 			fclose(binario);
 		}
 		else
